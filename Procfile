@@ -1,1 +1,1 @@
-bot: python3 src/bot.py
+web: python3 src/bot.py
