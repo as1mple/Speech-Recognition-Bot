@@ -17,9 +17,7 @@ logging.basicConfig(
 
 LNG_MAP = {"українська": "uk-UA", "російська": "ru-RU", "англійська": "en-US", "німецька": "de-DE"}
 CFG = {"language": "uk-UA"}
-TOKEN = os.getenv("TOKEN", "YOUR-TOKEN")
-
-logging.info(os.getenv("TOKEN"))
+TOKEN = "5649095246:AAGtGk6pLfbWL6Ty2IlccmM8vRz2KmYc6QM"
 
 bot = telebot.TeleBot(TOKEN)
 logging.info("Bot in wait status")
