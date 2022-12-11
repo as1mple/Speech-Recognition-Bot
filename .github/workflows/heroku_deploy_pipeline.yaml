@@ -36,6 +36,5 @@ jobs:
         use-docker: true
         docker_build_args: |
           YOUR_TOKEN
-        web: Dockerfile
       env:
         YOUR_TOKEN: ${{ secrets.YOUR_TOKEN }}
