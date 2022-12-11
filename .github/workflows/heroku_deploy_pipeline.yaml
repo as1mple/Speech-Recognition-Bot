@@ -33,8 +33,9 @@ jobs:
         heroku_api_key: ${{ secrets.HEROKU_API_TOKEN }}
         heroku_app_name: "speech-recognition-bot-test"
         heroku_email: "piterone.square@gmail.com"
-        usedocker: true
+        use-docker: true
         docker_build_args: |
           YOUR_TOKEN
+        web: Dockerfile
       env:
         YOUR_TOKEN: ${{ secrets.YOUR_TOKEN }}

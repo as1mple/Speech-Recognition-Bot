@@ -15,4 +15,4 @@ WORKDIR /app/
 ARG YOUR_TOKEN
 ENV TOKEN $YOUR_TOKEN
 
-CMD web: python src/bot.py
+CMD python src/bot.py
