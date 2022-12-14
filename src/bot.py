@@ -1,33 +1,44 @@
 import os
-import logging
+import sys
+from io import BytesIO
 
 import telebot
 from telebot import types
+from loguru import logger
 
 from modules.convert import get_text_with_speech
 
-
-logging.getLogger("requests").setLevel(logging.CRITICAL)
-logging.basicConfig(
-    format="[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s",
-    level=logging.INFO,
-    datefmt="%d.%m.%Y %H:%M:%S",
+logger.configure(
+    handlers=[
+        {"sink": sys.stderr, "level": "DEBUG"},
+        dict(
+            sink="logs/debug.log",
+            format="{time} {level} {message}",
+            level="DEBUG",
+            rotation="1 weeks",
+        ),
+    ]
 )
 
 
-LNG_MAP = {"українська": "uk-UA", "російська": "ru-RU", "англійська": "en-US", "німецька": "de-DE"}
+LANGUAGES_MAP = {
+    "українська": "uk-UA",
+    "російська": "ru-RU",
+    "англійська": "en-US",
+    "німецька": "de-DE",
+}
 CFG = {"language": "uk-UA"}
 TOKEN = os.getenv("TOKEN", "YOUR-TOKEN")
 
-logging.info(os.getenv("TOKEN"))
-
 bot = telebot.TeleBot(TOKEN)
-logging.info("Bot in wait status")
+logger.info("Bot successfully launched")
 
 
 @bot.message_handler(commands=["start", "help"])
-def handle_start_help(message):
-    logging.info(f"Send command => {message.text}")
+def handle_start_help(message: telebot.types.Message):
+    """Handle start and help commands"""
+
+    logger.info(f"User [{message.chat.id}] => asked for help")
 
     if message.text == "/start":
         bot.send_message(message.chat.id, "Щоб розпочати роботу бота привітайтесь з ним :=)")
@@ -49,21 +60,23 @@ def handle_start_help(message):
         bot.register_next_step_handler(message, say_hello)
 
 
-def is_help(message):
+def is_help(message: telebot.types.Message):
+    """Check if message is help command"""
+
     if not message == "/help":
         bot.register_next_step_handler(message, say_hello)
 
 
 @bot.message_handler(content_types=["voice"])
-def voice_processing(message):
-    path_to_save_voice = "tmp.wav"
+def voice_processing(message: telebot.types.Message):
+    """Processing voice message"""
+
+    logger.info(f"User [{message.chat.id}]  =>  Sent audio message")
+
     file_info = bot.get_file(message.voice.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
 
-    with open(path_to_save_voice, "wb") as audi_file:
-        audi_file.write(downloaded_file)
-
-    text = get_text_with_speech(path_to_save_voice, CFG["language"])
+    text = get_text_with_speech(BytesIO(downloaded_file), CFG["language"], logger, message)
 
     if not text:
         bot.send_message(
@@ -76,22 +89,23 @@ def voice_processing(message):
             message.chat.id,
             "Для повторного розпізаванная надішліть голосове повідомлення або файл формату wav.",
         )
-        logging.info(f"Recognition text => {text}")
-
-    os.remove(path_to_save_voice)
+        logger.info(f"User [{message.chat.id}] => Recognition text => {text}")
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
-def event_handler(message):
-    logging.info(f"User message => {message.text}")
+def event_handler(message: telebot.types.Message):
+    """Handle all messages"""
+
+    logger.info(f"User [{message.chat.id}] => sent a message => {message.text}")
 
     if word_search(message.text):
         say_hello(message)
 
 
-def say_hello(message):
+def say_hello(message: telebot.types.Message):
+    """Say hello to user and ask for language"""
+
     if word_search(message.text):
-        logging.info("User ~ hello")
 
         bot.send_message(
             message.chat.id,
@@ -108,25 +122,29 @@ def say_hello(message):
         bot.register_next_step_handler(message, get_language)
 
 
-def get_language(message):
-    save_data("language", LNG_MAP.get(message.text))
+def get_language(message: telebot.types.Message):
+    """Get language from user"""
+
+    save_data("language", LANGUAGES_MAP.get(message.text), message)
 
     bot.send_message(
         message.chat.id,
-        f"Мову розпізнавання - {message.text}.",
+        f"Мова розпізнавання - {message.text}.",
         reply_markup=telebot.types.ReplyKeyboardRemove(),
     )
     bot.send_message(
-        message.chat.id, f"Запишіть голосове повідомлення або надішліть файл формату wav."
+        message.chat.id, "Запишіть голосове повідомлення або надішліть файл формату wav."
     )
 
 
-def save_data(key: str, value: str):
+def save_data(key: str, value: str, message: telebot.types.Message) -> None:
     CFG.update({key: value})
-    logging.info(f"Update params => {CFG}")
+    logger.info(f"User [{message.chat.id}]  => Updated settings => {CFG}")
 
 
 def word_search(text: str) -> bool:
+    """Check if text contains hello words"""
+
     key_word = [
         "hello",
         "привет",
