@@ -8,6 +8,7 @@ from loguru import logger
 
 from modules.convert import get_text_with_speech
 
+
 logger.configure(
     handlers=[
         {"sink": sys.stderr, "level": "DEBUG"},
@@ -37,7 +38,6 @@ logger.info("Bot successfully launched")
 @bot.message_handler(commands=["start", "help"])
 def handle_start_help(message: telebot.types.Message):
     """Handle start and help commands"""
-
     logger.info(f"User [{message.chat.id}] => asked for help")
 
     if message.text == "/start":
@@ -62,7 +62,6 @@ def handle_start_help(message: telebot.types.Message):
 
 def is_help(message: telebot.types.Message):
     """Check if message is help command"""
-
     if not message == "/help":
         bot.register_next_step_handler(message, say_hello)
 
@@ -70,7 +69,6 @@ def is_help(message: telebot.types.Message):
 @bot.message_handler(content_types=["voice"])
 def voice_processing(message: telebot.types.Message):
     """Processing voice message"""
-
     logger.info(f"User [{message.chat.id}]  =>  Sent audio message")
 
     file_info = bot.get_file(message.voice.file_id)
@@ -95,18 +93,14 @@ def voice_processing(message: telebot.types.Message):
 @bot.message_handler(func=lambda message: True, content_types=["text"])
 def event_handler(message: telebot.types.Message):
     """Handle all messages"""
-
     logger.info(f"User [{message.chat.id}] => sent a message => {message.text}")
-
     if word_search(message.text):
         say_hello(message)
 
 
 def say_hello(message: telebot.types.Message):
     """Say hello to user and ask for language"""
-
     if word_search(message.text):
-
         bot.send_message(
             message.chat.id,
             "Доброго часу доби, вас вітає бот для перетворення аудіозапису на текст.",
@@ -124,7 +118,6 @@ def say_hello(message: telebot.types.Message):
 
 def get_language(message: telebot.types.Message):
     """Get language from user"""
-
     save_data("language", LANGUAGES_MAP.get(message.text), message)
 
     bot.send_message(
@@ -138,13 +131,13 @@ def get_language(message: telebot.types.Message):
 
 
 def save_data(key: str, value: str, message: telebot.types.Message) -> None:
+    """Save data to config"""
     CFG.update({key: value})
     logger.info(f"User [{message.chat.id}]  => Updated settings => {CFG}")
 
 
 def word_search(text: str) -> bool:
     """Check if text contains hello words"""
-
     key_word = [
         "hello",
         "привет",
