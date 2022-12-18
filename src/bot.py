@@ -14,7 +14,7 @@ logger.configure(
     handlers=[
         {"sink": sys.stderr, "level": "DEBUG"},
         dict(
-            sink="logs/debug.log",
+            sink="../logs/debug.log",
             format="{time} {level} {message}",
             level="DEBUG",
             rotation="1 weeks",
@@ -29,9 +29,9 @@ LANGUAGES_MAP = {
     "німецька": "de-DE",
 }
 
-HOST = os.getenv("HOST")
-PORT = os.getenv("PORT")
-TOKEN = os.getenv("TOKEN", "YOUR-TOKEN")
+SERVER_HOST = os.getenv("SERVER_HOST")
+SERVER_PORT = os.getenv("SERVER_PORT")
+TOKEN = os.getenv("TOKEN")
 
 CFG = {"language": "uk-UA"}
 utcnow = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -110,8 +110,8 @@ def voice_processing(message: telebot.types.Message):
             logger.info(f"User [{message.chat.id}] => Recognition text => {text}")
             try:
                 status = save_to_database(
-                    HOST,
-                    PORT,
+                    SERVER_HOST,
+                    SERVER_PORT,
                     message.chat.id,
                     utcnow,
                     text,

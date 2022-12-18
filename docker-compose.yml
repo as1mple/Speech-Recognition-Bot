@@ -1,9 +1,0 @@
-version: "3"
-
-services:
-  telegram-bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-      - YOUR_TOKEN="YOUR_TOKEN"
