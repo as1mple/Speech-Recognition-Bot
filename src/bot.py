@@ -110,7 +110,13 @@ def voice_processing(message: telebot.types.Message):
             logger.info(f"User [{message.chat.id}] => Recognition text => {text}")
             try:
                 status = save_to_database(
-                    HOST, PORT, message.chat.id, utcnow, text, downloaded_file
+                    HOST,
+                    PORT,
+                    message.chat.id,
+                    utcnow,
+                    text,
+                    CFG["language"],
+                    downloaded_file
                 )
 
                 logger.info(f"User [{message.chat.id}] ~ Request-Status  => {status}")
@@ -154,7 +160,7 @@ def say_hello(message: telebot.types.Message):
 
 def get_language(message: telebot.types.Message):
     """Get language from user"""
-    save_config("language", LANGUAGES_MAP.get(message.text), message)
+    save_config("language", LANGUAGES_MAP.get(message.text, "uk-UA"), message)
 
     bot.send_message(
         message.chat.id,
