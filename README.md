@@ -3,6 +3,10 @@
 ## Templates
 
 ```bash
+pip install -r requirements.txt
+```
+
+```bash
 export TOKEN=TOKEN
 export SERVER_HOST=SERVER-HOST
 export SERVER_PORT=SERVER-PORT
