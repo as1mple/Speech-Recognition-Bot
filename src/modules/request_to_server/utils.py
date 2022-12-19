@@ -1,3 +1,4 @@
+import base64
 import requests
 
 
@@ -8,7 +9,7 @@ def save_to_database(
     json_data = {
         "user_id": chat_id,
         "text": text,
-        "speech_bytes": speech_bytes.decode("ISO-8859-1"),
+        "speech_bytes": base64.b64encode(speech_bytes).decode(),
         "language": language,
         "timestamp": utcnow,
     }
