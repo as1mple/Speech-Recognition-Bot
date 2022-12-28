@@ -14,7 +14,7 @@ logger.configure(
     handlers=[
         {"sink": sys.stderr, "level": "DEBUG"},
         dict(
-            sink="../logs/debug.log",
+            sink="logs/debug.log",
             format="{time} {level} {message}",
             level="DEBUG",
             rotation="1 weeks",
