@@ -105,32 +105,61 @@ def voice_processing(message: telebot.types.Message):
             )
         else:
             bot.send_message(message.chat.id, text)
-            utcnow = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-            logger.info(f"User [{message.chat.id}] => Recognition text => {text}")
-            try:
-                status = save_to_database(
-                    SERVER_HOST,
-                    SERVER_PORT,
-                    message.chat.id,
-                    utcnow,
-                    text,
-                    CFG["language"],
-                    downloaded_file
-                )
+            markup = types.ReplyKeyboardMarkup()
 
-                logger.info(f"User [{message.chat.id}] ~ Request-Status  => {status}")
-            except Exception as e:
-                logger.error(f"User [{message.chat.id}] ~ Save-Error=>  {e}")
-                bot.send_message(
-                    message.chat.id,
-                    "На етапі збереження даних сталася помилка - сповістіть про це розробників",
-                )
+            markup.row("Так", "Ні")
             bot.send_message(
-                message.chat.id,
-                "Для повторного розпізаванная надішліть голосове повідомлення або файл формату wav.",
-            )
+                message.chat.id, "Зберегти отримані дані до Бази Знань?", reply_markup=markup)
 
+            bot.register_next_step_handler(message, is_save_to_db, text, downloaded_file)
+
+
+def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
+    if message.text.lower() == "так":
+        bot.send_message(
+            message.chat.id, "Напишіть опис до файлу або його id", reply_markup=telebot.types.ReplyKeyboardRemove())
+
+        bot.register_next_step_handler(message, input_description, text, downloaded_file)
+
+    else:
+        bot.send_message(
+            message.chat.id, "Запишіть голосове повідомлення або надішліть файл формату wav.",
+            reply_markup=telebot.types.ReplyKeyboardRemove(),
+        )
+
+
+def input_description(message: telebot.types.Message, text, downloaded_file):
+    """Input description for file and save to db"""
+    logger.info(f"User [{message.chat.id}]  =>  Input description => {message.text}")
+    save_config("description", message.text, message)
+
+    utcnow = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    logger.info(f"User [{message.chat.id}] => Recognition text => {text}")
+    try:
+        status = save_to_database(
+            SERVER_HOST,
+            SERVER_PORT,
+            message.chat.id,
+            utcnow,
+            text,
+            CFG["language"],
+            downloaded_file,
+            message.text
+        )
+
+        logger.info(f"User [{message.chat.id}] ~ Request-Status  => {status}")
+    except Exception as e:
+        logger.error(f"User [{message.chat.id}] ~ Save-Error=>  {e}")
+        bot.send_message(
+            message.chat.id,
+            "На етапі збереження даних сталася помилка - сповістіть про це розробників",
+        )
+
+    bot.send_message(
+        message.chat.id, "Запишіть голосове повідомлення або надішліть файл формату wav.",
+        reply_markup=telebot.types.ReplyKeyboardRemove(),
+    )
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
 def event_handler(message: telebot.types.Message):
