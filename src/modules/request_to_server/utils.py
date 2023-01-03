@@ -3,7 +3,14 @@ import requests
 
 
 def save_to_database(
-    host: str, port: str, chat_id: str, utcnow: str, text: str, language: str, speech_bytes: str, description: str
+    host: str,
+    port: str,
+    chat_id: str,
+    utcnow: str,
+    text: str,
+    language: str,
+    speech_bytes: str,
+    description: str,
 ):
     """Save to database."""
     json_data = {
@@ -22,7 +29,7 @@ def save_to_database(
 def get_save_data(host: str, port: str, time_from: str, time_to: str):
     """Get data from database."""
     params = {
-        'time_from': time_from,
-        'time_to': time_to,
+        "time_from": time_from,
+        "time_to": time_to,
     }
-    return requests.get(f'http://{host}:{port}/get/data', params=params).json()
+    return requests.get(f"http://{host}:{port}/get/data", params=params).json()

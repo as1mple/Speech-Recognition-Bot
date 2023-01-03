@@ -64,9 +64,9 @@ def handle_start_help(message: telebot.types.Message):
         )
 
     elif message.text == "/search":
-        print(911)
         bot.send_message(
-            message.chat.id, "Надішліть часовий проміжок за який потрібно знайти записи. Слід зауважити час збережений за Coordinated Universal Time (UTC). Приклад формату:"
+            message.chat.id,
+            "Надішліть часовий проміжок за який потрібно знайти записи. Слід зауважити час збережений за Coordinated Universal Time (UTC). Приклад формату:",
         )
         bot.send_message(
             message.chat.id, "2021-12-18T12:41:05.488441Z 2021-12-18T12:41:05.488441Z"
@@ -94,9 +94,14 @@ def search_files(message: telebot.types.Message):
     try:
         time_from, time_to = message.text.split()
     except Exception:
-        bot.send_message(message.chat.id, "Неправильний формат часу. Слід зауважити час збережений за "
-                                          "Coordinated Universal Time (UTC). Приклад формату:")
-        bot.send_message(message.chat.id, "2021-12-18T12:41:05.488441Z 2021-12-18T12:41:05.488441Z")
+        bot.send_message(
+            message.chat.id,
+            "Неправильний формат часу. Слід зауважити час збережений за "
+            "Coordinated Universal Time (UTC). Приклад формату:",
+        )
+        bot.send_message(
+            message.chat.id, "2021-12-18T12:41:05.488441Z 2021-12-18T12:41:05.488441Z"
+        )
         bot.send_message(message.chat.id, "Введіть часовий проміжок ще раз:")
 
         logger.error(f"User [{message.chat.id}] => Invalid time format => {message.text}")
@@ -111,16 +116,22 @@ def search_files(message: telebot.types.Message):
 
             for data in result:
                 user_id = data["user_id"]
-                time = data["timestamp"]['$date']
-                decode_bytes = base64.b64decode(data['speech_bytes'])
+                time = data["timestamp"]["$date"]
+                decode_bytes = base64.b64decode(data["speech_bytes"])
 
-                bot.send_voice(message.chat.id, decode_bytes, caption=f'description ~ {data["description"]} \n'
-                                                                      f'time ~ {time} \nuser_id ~ {user_id} \n'
-                                                                      f'language ~ {data["language"]} \n'
-                                                                      f'text ~ {data["text"]}')
+                bot.send_voice(
+                    message.chat.id,
+                    decode_bytes,
+                    caption=f'description ~ {data["description"]} \n'
+                    f"time ~ {time} \nuser_id ~ {user_id} \n"
+                    f'language ~ {data["language"]} \n'
+                    f'text ~ {data["text"]}',
+                )
 
         except Exception as e:
-            bot.send_message(message.chat.id, "Помилка з'єднання з сервером. Повідомте про це розробників.")
+            bot.send_message(
+                message.chat.id, "Помилка з'єднання з сервером. Повідомте про це розробників."
+            )
             logger.error(f"User [{message.chat.id}] => {e}")
 
 
@@ -160,7 +171,8 @@ def voice_processing(message: telebot.types.Message):
 
             markup.row("Так", "Ні")
             bot.send_message(
-                message.chat.id, "Зберегти отримані дані до Бази Знань?", reply_markup=markup)
+                message.chat.id, "Зберегти отримані дані до Бази Знань?", reply_markup=markup
+            )
 
             bot.register_next_step_handler(message, is_save_to_db, text, downloaded_file)
 
@@ -168,13 +180,17 @@ def voice_processing(message: telebot.types.Message):
 def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
     if message.text.lower() == "так":
         bot.send_message(
-            message.chat.id, "Напишіть опис до файлу або його id", reply_markup=telebot.types.ReplyKeyboardRemove())
+            message.chat.id,
+            "Напишіть опис до файлу або його id",
+            reply_markup=telebot.types.ReplyKeyboardRemove(),
+        )
 
         bot.register_next_step_handler(message, input_description, text, downloaded_file)
 
     else:
         bot.send_message(
-            message.chat.id, "Запишіть голосове повідомлення або надішліть файл формату wav.",
+            message.chat.id,
+            "Запишіть голосове повідомлення або надішліть файл формату wav.",
             reply_markup=telebot.types.ReplyKeyboardRemove(),
         )
 
@@ -195,7 +211,7 @@ def input_description(message: telebot.types.Message, text, downloaded_file):
             text,
             CFG["language"],
             downloaded_file,
-            message.text
+            message.text,
         )
 
         bot.send_message(
@@ -211,9 +227,11 @@ def input_description(message: telebot.types.Message, text, downloaded_file):
         )
 
     bot.send_message(
-        message.chat.id, "Запишіть голосове повідомлення або надішліть файл формату wav.",
+        message.chat.id,
+        "Запишіть голосове повідомлення або надішліть файл формату wav.",
         reply_markup=telebot.types.ReplyKeyboardRemove(),
     )
+
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
 def event_handler(message: telebot.types.Message):
