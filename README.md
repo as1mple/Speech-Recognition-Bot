@@ -22,6 +22,6 @@ sudo docker build -f Dockerfile -t speech_to_text_bot . # => Docker Build
 ```
 
 ```bash
-sudo docker run -e TOKEN=YOUR-TOKEN -e SERVER_HOST=YOUR-HOST -e SERVER_HOST=YOUR-PORT -v /{full path to project}/logs/:/app/logs/ speech_to_text_bot # => Docker Run
+sudo docker run -d --restart unless-stopped -e TOKEN=YOUR-TOKEN -e SERVER_HOST=YOUR-HOST -e SERVER_HOST=YOUR-PORT -v /{full path to project}/logs/:/app/logs/ speech_to_text_bot # => Docker Run
 ```
 
