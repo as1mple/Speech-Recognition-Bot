@@ -1,3 +1,4 @@
+import base64
 import os
 import sys
 from io import BytesIO
@@ -8,7 +9,7 @@ from telebot import types
 from loguru import logger
 
 from modules.convert import get_text_with_speech
-from modules.request_to_server import save_to_database
+from modules.request_to_server import save_to_database, get_save_data
 
 logger.configure(
     handlers=[
@@ -40,7 +41,7 @@ bot = telebot.TeleBot(TOKEN)
 logger.info("Bot successfully launched")
 
 
-@bot.message_handler(commands=["start", "help"])
+@bot.message_handler(commands=["start", "help", "search"])
 def handle_start_help(message: telebot.types.Message):
     """Handle start and help commands"""
     logger.info(f"User [{message.chat.id}] => asked for help")
@@ -62,6 +63,18 @@ def handle_start_help(message: telebot.types.Message):
             "=> Для зміни мови розпізнавання потрібно повторно привітатись.",
         )
 
+    elif message.text == "/search":
+        print(911)
+        bot.send_message(
+            message.chat.id, "Надішліть часовий проміжок за який потрібно знайти записи. Слід зауважити час збережений за Coordinated Universal Time (UTC). Приклад формату:"
+        )
+        bot.send_message(
+            message.chat.id, "2021-12-18T12:41:05.488441Z 2021-12-18T12:41:05.488441Z"
+        )
+        bot.send_message(message.chat.id, "Введіть часовий проміжок:")
+
+        bot.register_next_step_handler(message, search_files)
+
     elif word_search(message.text):
         say_hello(message)
     else:
@@ -72,6 +85,43 @@ def handle_start_help(message: telebot.types.Message):
             "на українською, англійською чи російською мовою \n=> Вибрати мову для розпізнавання.\n"
             "=> Для зміни мови розпізнавання потрібно повторно привітатись.",
         )
+
+
+def search_files(message: telebot.types.Message):
+    """Handle search files command"""
+    logger.info(f"User [{message.chat.id}] => asked for search files")
+
+    try:
+        time_from, time_to = message.text.split()
+    except Exception:
+        bot.send_message(message.chat.id, "Неправильний формат часу. Слід зауважити час збережений за "
+                                          "Coordinated Universal Time (UTC). Приклад формату:")
+        bot.send_message(message.chat.id, "2021-12-18T12:41:05.488441Z 2021-12-18T12:41:05.488441Z")
+        bot.send_message(message.chat.id, "Введіть часовий проміжок ще раз:")
+
+        logger.error(f"User [{message.chat.id}] => Invalid time format => {message.text}")
+        bot.register_next_step_handler(message, search_files)
+
+    else:
+        try:
+            result = get_save_data(SERVER_HOST, SERVER_PORT, time_from, time_to)["result"]
+
+            bot.send_message(message.chat.id, f"Знайдено записів: {len(result)}")
+            logger.info(f"User [{message.chat.id}] => Знайдено записів => {len(result)}")
+
+            for data in result:
+                user_id = data["user_id"]
+                time = data["timestamp"]['$date']
+                decode_bytes = base64.b64decode(data['speech_bytes'])
+
+                bot.send_voice(message.chat.id, decode_bytes, caption=f'description ~ {data["description"]} \n'
+                                                                      f'time ~ {time} \nuser_id ~ {user_id} \n'
+                                                                      f'language ~ {data["language"]} \n'
+                                                                      f'text ~ {data["text"]}')
+
+        except Exception as e:
+            bot.send_message(message.chat.id, "Помилка з'єднання з сервером. Повідомте про це розробників.")
+            logger.error(f"User [{message.chat.id}] => {e}")
 
 
 def is_help(message: telebot.types.Message):

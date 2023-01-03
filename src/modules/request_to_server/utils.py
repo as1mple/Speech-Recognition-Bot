@@ -17,3 +17,12 @@ def save_to_database(
 
     response = requests.post(f"http://{host}:{port}/add/data", json=json_data)
     return response
+
+
+def get_save_data(host: str, port: str, time_from: str, time_to: str):
+    """Get data from database."""
+    params = {
+        'time_from': time_from,
+        'time_to': time_to,
+    }
+    return requests.get(f'http://{host}:{port}/get/data', params=params).json()
