@@ -148,12 +148,16 @@ def input_description(message: telebot.types.Message, text, downloaded_file):
             message.text
         )
 
+        bot.send_message(
+            message.chat.id,
+            "✅ Інформація успішно збережена до Бази Знань.",
+        )
         logger.info(f"User [{message.chat.id}] ~ Request-Status  => {status}")
     except Exception as e:
         logger.error(f"User [{message.chat.id}] ~ Save-Error=>  {e}")
         bot.send_message(
             message.chat.id,
-            "На етапі збереження даних сталася помилка - сповістіть про це розробників",
+            "❌ На етапі збереження даних сталася помилка - сповістіть про це розробників",
         )
 
     bot.send_message(
