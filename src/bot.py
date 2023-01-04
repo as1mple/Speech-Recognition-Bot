@@ -77,6 +77,7 @@ def handle_start_help(message: telebot.types.Message):
 
     elif word_search(message.text):
         say_hello(message)
+
     else:
         bot.send_message(
             message.chat.id,
@@ -261,11 +262,12 @@ def say_hello(message: telebot.types.Message):
 
 def get_language(message: telebot.types.Message):
     """Get language from user"""
-    save_config("language", LANGUAGES_MAP.get(message.text, "uk-UA"), message)
+    change_language = LANGUAGES_MAP.get(message.text, "uk-UA")
+    save_config("language", change_language, message)
 
     bot.send_message(
         message.chat.id,
-        f"Мова розпізнавання - {message.text}.",
+        f"Мова розпізнавання - {change_language}.",
         reply_markup=telebot.types.ReplyKeyboardRemove(),
     )
     bot.send_message(
