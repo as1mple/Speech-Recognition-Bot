@@ -145,7 +145,7 @@ def is_help(message: telebot.types.Message):
 @bot.message_handler(content_types=["voice"])
 def voice_processing(message: telebot.types.Message):
     """Processing voice message"""
-    logger.info(f"User [{message.chat.id}]  =>  Sent audio message")
+    logger.info(f"User [{message.chat.id}] => Sent audio message")
 
     file_info = bot.get_file(message.voice.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
@@ -157,7 +157,7 @@ def voice_processing(message: telebot.types.Message):
             message.chat.id,
             "На етапі розпізнавання аудіозапису сталася помилка - сповістіть про це розробників",
         )
-        logger.error(f"User [{message.chat.id}] ~ Recognition-Error  =>  {e}")
+        logger.error(f"User [{message.chat.id}] ~ Recognition-Error => {e}")
 
     else:
         if not text:
@@ -201,7 +201,7 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
 
 def input_description(message: telebot.types.Message, text, downloaded_file):
     """Input description for file and save to db"""
-    logger.info(f"User [{message.chat.id}]  =>  Input description => {message.text}")
+    logger.info(f"User [{message.chat.id}] => Input description => {message.text}")
     save_config("description", message.text, message)
 
     utcnow = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -221,9 +221,9 @@ def input_description(message: telebot.types.Message, text, downloaded_file):
             message.chat.id,
             "✅ Інформація успішно збережена до Бази Знань.",
         )
-        logger.info(f"User [{message.chat.id}] ~ Request-Status  => {status}")
+        logger.info(f"User [{message.chat.id}] ~ Request-Status => {status}")
     except Exception as e:
-        logger.error(f"User [{message.chat.id}] ~ Save-Error=>  {e}")
+        logger.error(f"User [{message.chat.id}] ~ Save-Error => {e}")
         bot.send_message(
             message.chat.id,
             "❌ На етапі збереження даних сталася помилка - сповістіть про це розробників",
@@ -280,7 +280,7 @@ def get_language(message: telebot.types.Message):
 def save_config(key: str, value: str, message: telebot.types.Message) -> None:
     """Save data to config"""
     CFG.update({key: value})
-    logger.info(f"User [{message.chat.id}]  => Updated settings => {CFG}")
+    logger.info(f"User [{message.chat.id}] => Updated settings => {CFG}")
 
 
 def word_search(text: str) -> bool:
