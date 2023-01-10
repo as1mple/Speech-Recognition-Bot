@@ -90,7 +90,7 @@ def handle_start_help(message: telebot.types.Message):
 
 def search_files(message: telebot.types.Message):
     """Handle search files command"""
-    logger.info(f"User [{message.chat.id}] => asked for search files")
+    logger.info(f"User [{message.chat.id}] => search files by time interval => {message.text}")
 
     try:
         time_from, time_to = message.text.split()
