@@ -113,7 +113,7 @@ def search_files(message: telebot.types.Message):
             result = get_save_data(SERVER_HOST, SERVER_PORT, time_from, time_to)["result"]
 
             bot.send_message(message.chat.id, f"Знайдено записів: {len(result)}")
-            logger.info(f"User [{message.chat.id}] => Знайдено записів => {len(result)}")
+            logger.info(f"User [{message.chat.id}] => Find files => {len(result)}")
 
             for data in result:
                 user_id = data["user_id"]
@@ -167,6 +167,7 @@ def voice_processing(message: telebot.types.Message):
             )
         else:
             bot.send_message(message.chat.id, text)
+            logger.info(f"User [{message.chat.id}] => Recognition text => {text}")
 
             markup = types.ReplyKeyboardMarkup()
 
@@ -179,6 +180,8 @@ def voice_processing(message: telebot.types.Message):
 
 
 def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
+    logger.info(f"User [{message.chat.id}] => Asked for save data => {message.text}")
+
     if message.text.lower() == "так":
         bot.send_message(
             message.chat.id,
@@ -202,7 +205,6 @@ def input_description(message: telebot.types.Message, text, downloaded_file):
     save_config("description", message.text, message)
 
     utcnow = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    logger.info(f"User [{message.chat.id}] => Recognition text => {text}")
     try:
         status = save_to_database(
             SERVER_HOST,
