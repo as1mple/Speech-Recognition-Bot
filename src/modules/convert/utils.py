@@ -29,3 +29,7 @@ def get_text_with_speech(wav_obj: bytes, language: str, logger, message) -> str:
             logger.error(f"User [{message.chat.id}] => Invalid speech. {str(e)}")
 
     return result
+
+
+def size_b64_string(b64string):
+    return (len(b64string) * 3) / 4 - b64string.count('=', -2)

@@ -8,7 +8,7 @@ import telebot
 from telebot import types
 from loguru import logger
 
-from modules.convert import get_text_with_speech
+from modules.convert import get_text_with_speech, size_b64_string
 from modules.request_to_server import save_to_database, get_save_data, get_files_by_chat_id
 
 logger.configure(
@@ -127,15 +127,30 @@ def search_files(message: telebot.types.Message):
                 user_id = data["user_id"]
                 time = data["timestamp"]["$date"]
                 decode_bytes = base64.b64decode(data["speech_bytes"])
+                caption = f'description ~ {data["description"]} \n' \
+                          f"time ~ {time} \nuser_id ~ {user_id} \n" \
+                          f'language ~ {data["language"]} \n' \
+                          f'text ~ {data["text"]}'
 
-                bot.send_voice(
-                    message.chat.id,
-                    decode_bytes,
-                    caption=f'description ~ {data["description"]} \n'
-                    f"time ~ {time} \nuser_id ~ {user_id} \n"
-                    f'language ~ {data["language"]} \n'
-                    f'text ~ {data["text"]}',
-                )
+                # logger.info(
+                #     f"User [{message.chat.id}] => Send file => {size_b64_string(data['speech_bytes']) / 1024} kb")
+                # logger.info(f"User [{message.chat.id}] => Length caption => {len(caption)} characters")
+
+                if len(caption) > 1024:
+                    preview_message = bot.send_voice(
+                        message.chat.id,
+                        decode_bytes,
+                        caption=caption[:1024],
+                    )
+
+                    bot.reply_to(preview_message, caption[1024:])
+
+                else:
+                    bot.send_voice(
+                        message.chat.id,
+                        decode_bytes,
+                        caption=caption,
+                    )
 
         except Exception as e:
             bot.send_message(
