@@ -38,7 +38,7 @@ def get_save_data(host: str, port: str, time_from: str, time_to: str):
 def get_files_by_chat_id(host: str, port: str, chat_id: str):
     """Get files by chat id."""
     params = {
-        "chat_id": chat_id,
+        "user_id": chat_id,
     }
     return requests.get(f"http://{host}:{port}/get/data", params=params).json()
 
