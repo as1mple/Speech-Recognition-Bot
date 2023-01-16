@@ -9,7 +9,7 @@ from telebot import types
 from loguru import logger
 
 from modules.convert import get_text_with_speech
-from modules.request_to_server import save_to_database, get_save_data
+from modules.request_to_server import save_to_database, get_save_data, get_files_by_chat_id
 
 logger.configure(
     handlers=[
@@ -68,10 +68,11 @@ def handle_start_help(message: telebot.types.Message):
             message.chat.id,
             "Надішліть часовий проміжок за який потрібно знайти записи. Слід зауважити час збережений за Coordinated Universal Time (UTC). Приклад формату:",
         )
+
         bot.send_message(
             message.chat.id, "2021-12-18T12:41:05.488441Z 2021-12-18T12:41:05.488441Z"
         )
-        bot.send_message(message.chat.id, "Введіть часовий проміжок:")
+        bot.send_message(message.chat.id, "Введіть часовий проміжок (або chat id):")
 
         bot.register_next_step_handler(message, search_files)
 
@@ -90,10 +91,14 @@ def handle_start_help(message: telebot.types.Message):
 
 def search_files(message: telebot.types.Message):
     """Handle search files command"""
-    logger.info(f"User [{message.chat.id}] => search files by time interval => {message.text}")
+    logger.info(f"User [{message.chat.id}] => search files by time interval or chat_id => {message.text}")
 
+    chat_id, time_from, time_to = None, None, None
     try:
-        time_from, time_to = message.text.split()
+        if len(message.text.split()) == 1:
+            chat_id = int(message.text)
+        else:
+            time_from, time_to = message.text.split()
     except Exception:
         bot.send_message(
             message.chat.id,
@@ -110,7 +115,10 @@ def search_files(message: telebot.types.Message):
 
     else:
         try:
-            result = get_save_data(SERVER_HOST, SERVER_PORT, time_from, time_to)["result"]
+            if chat_id:
+                result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, chat_id)["result"]
+            else:
+                result = get_save_data(SERVER_HOST, SERVER_PORT, time_from, time_to)["result"]
 
             bot.send_message(message.chat.id, f"Знайдено записів: {len(result)}")
             logger.info(f"User [{message.chat.id}] => Find files => {len(result)}")
@@ -249,7 +257,8 @@ def say_hello(message: telebot.types.Message):
     if word_search(message.text):
         bot.send_message(
             message.chat.id,
-            "Доброго часу доби, вас вітає бот для перетворення аудіозапису на текст.",
+            f"Доброго часу доби, вас вітає бот для перетворення аудіозапису на текст. "
+            f"Ваш унікальний ідентифікатор чату => {message.chat.id}.",
         )
         markup = types.ReplyKeyboardMarkup()
 
