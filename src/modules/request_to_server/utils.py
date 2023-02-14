@@ -5,6 +5,7 @@ import requests
 def save_to_database(
     host: str,
     port: str,
+    name_collection: str,
     chat_id: str,
     utcnow: str,
     text: str,
@@ -26,18 +27,20 @@ def save_to_database(
     return response
 
 
-def get_save_data(host: str, port: str, time_from: str, time_to: str):
+def get_save_data(host: str, port: str, name_collection: str, time_from: str, time_to: str):
     """Get data from database."""
     params = {
+        "name_collection": name_collection,
         "time_from": time_from,
         "time_to": time_to,
     }
     return requests.get(f"http://{host}:{port}/get/data", params=params).json()
 
 
-def get_files_by_chat_id(host: str, port: str, chat_id: str):
+def get_files_by_chat_id(host: str, port: str, name_collection: str, chat_id: str):
     """Get files by chat id."""
     params = {
+        "name_collection": name_collection,
         "user_id": chat_id,
     }
     return requests.get(f"http://{host}:{port}/get/data", params=params).json()

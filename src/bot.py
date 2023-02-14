@@ -116,9 +116,9 @@ def search_files(message: telebot.types.Message):
     else:
         try:
             if chat_id:
-                result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, chat_id)["result"]
+                result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, "user", chat_id)["result"]
             else:
-                result = get_save_data(SERVER_HOST, SERVER_PORT, time_from, time_to)["result"]
+                result = get_save_data(SERVER_HOST, SERVER_PORT, "user", time_from, time_to)["result"]
 
             bot.send_message(message.chat.id, f"Знайдено записів: {len(result)}")
             logger.info(f"User [{message.chat.id}] => Find files => {len(result)}")
@@ -205,6 +205,8 @@ def voice_processing(message: telebot.types.Message):
 def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
     logger.info(f"User [{message.chat.id}] => Asked for save data => {message.text}")
 
+    time_utc = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
     if message.text.lower() == "так":
         bot.send_message(
             message.chat.id,
@@ -212,9 +214,12 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
             reply_markup=telebot.types.ReplyKeyboardRemove(),
         )
 
-        bot.register_next_step_handler(message, input_description, text, downloaded_file)
+        bot.register_next_step_handler(message, input_description, text, downloaded_file, time_utc)
 
     else:
+
+        save_to_db_without_description(text, downloaded_file, time_utc)
+
         bot.send_message(
             message.chat.id,
             "Запишіть голосове повідомлення або надішліть файл формату wav.",
@@ -222,18 +227,41 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
         )
 
 
-def input_description(message: telebot.types.Message, text, downloaded_file):
-    """Input description for file and save to db"""
-    logger.info(f"User [{message.chat.id}] => Input description => {message.text}")
-    save_config("description", message.text, message)
+def save_to_db_without_description(message: telebot.types.Message, text, downloaded_file, time_utc):
+    """Save to database without description"""
 
-    utcnow = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    logger.info(f"User [{message.chat.id}] => Input description => None")
+
     try:
         status = save_to_database(
             SERVER_HOST,
             SERVER_PORT,
+            "undefined_user",
             message.chat.id,
-            utcnow,
+            time_utc,
+            text,
+            CFG["language"],
+            downloaded_file,
+            message.text,
+        )
+
+        logger.info(f"User [{message.chat.id}] ~ Request-Status => {status}")
+    except Exception as e:
+        logger.error(f"User [{message.chat.id}] ~ Save-Error => {e}")
+
+
+def input_description(message: telebot.types.Message, text, downloaded_file, time_utc):
+    """Input description for file and save to db"""
+    logger.info(f"User [{message.chat.id}] => Input description => {message.text}")
+    save_config("description", message.text, message)
+
+    try:
+        status = save_to_database(
+            SERVER_HOST,
+            SERVER_PORT,
+            "user",
+            message.chat.id,
+            time_utc,
             text,
             CFG["language"],
             downloaded_file,
