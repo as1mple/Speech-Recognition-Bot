@@ -114,49 +114,66 @@ def search_files(message: telebot.types.Message):
         bot.register_next_step_handler(message, search_files)
 
     else:
-        try:
-            if chat_id:
-                result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, "user", chat_id)["result"]
+        markup = types.ReplyKeyboardMarkup()
+
+        markup.row("Так", "Ні")
+        bot.send_message(
+            message.chat.id, "Виконувати пошук серед користувачів, які надали анотацію до аудіозапису?", reply_markup=markup
+        )
+
+        bot.register_next_step_handler(message, run_search_files, chat_id, time_from, time_to)
+
+
+def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to):
+    collection_name = "user" if message.text.lower() == "так" else "undefined_user"
+    logger.info(f"User [{message.chat.id}] => Asked search files with => {collection_name}")
+
+    try:
+        if chat_id:
+            result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, collection_name, chat_id)["result"]
+        else:
+            result = get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)["result"]
+
+        bot.send_message(
+            message.chat.id, f"Знайдено записів: {len(result)}",
+            reply_markup=telebot.types.ReplyKeyboardRemove(),
+        )
+        logger.info(f"User [{message.chat.id}] => Find files => {len(result)}")
+
+        for data in result:
+            user_id = data["user_id"]
+            time = data["timestamp"]["$date"]
+            decode_bytes = base64.b64decode(data["speech_bytes"])
+            caption = f'description ~ {data["description"]} \n' \
+                      f"time ~ {time} \nuser_id ~ {user_id} \n" \
+                      f'language ~ {data["language"]} \n' \
+                      f'text ~ {data["text"]}'
+
+            # logger.info(
+            #     f"User [{message.chat.id}] => Send file => {size_b64_string(data['speech_bytes']) / 1024} kb")
+            # logger.info(f"User [{message.chat.id}] => Length caption => {len(caption)} characters")
+
+            if len(caption) > 1024:
+                preview_message = bot.send_voice(
+                    message.chat.id,
+                    decode_bytes,
+                    caption=caption[:1024],
+                )
+
+                bot.reply_to(preview_message, caption[1024:])
+
             else:
-                result = get_save_data(SERVER_HOST, SERVER_PORT, "user", time_from, time_to)["result"]
+                bot.send_voice(
+                    message.chat.id,
+                    decode_bytes,
+                    caption=caption,
+                )
 
-            bot.send_message(message.chat.id, f"Знайдено записів: {len(result)}")
-            logger.info(f"User [{message.chat.id}] => Find files => {len(result)}")
-
-            for data in result:
-                user_id = data["user_id"]
-                time = data["timestamp"]["$date"]
-                decode_bytes = base64.b64decode(data["speech_bytes"])
-                caption = f'description ~ {data["description"]} \n' \
-                          f"time ~ {time} \nuser_id ~ {user_id} \n" \
-                          f'language ~ {data["language"]} \n' \
-                          f'text ~ {data["text"]}'
-
-                # logger.info(
-                #     f"User [{message.chat.id}] => Send file => {size_b64_string(data['speech_bytes']) / 1024} kb")
-                # logger.info(f"User [{message.chat.id}] => Length caption => {len(caption)} characters")
-
-                if len(caption) > 1024:
-                    preview_message = bot.send_voice(
-                        message.chat.id,
-                        decode_bytes,
-                        caption=caption[:1024],
-                    )
-
-                    bot.reply_to(preview_message, caption[1024:])
-
-                else:
-                    bot.send_voice(
-                        message.chat.id,
-                        decode_bytes,
-                        caption=caption,
-                    )
-
-        except Exception as e:
-            bot.send_message(
-                message.chat.id, "Помилка з'єднання з сервером. Повідомте про це розробників."
-            )
-            logger.error(f"User [{message.chat.id}] => {e}")
+    except Exception as e:
+        bot.send_message(
+            message.chat.id, "Помилка з'єднання з сервером. Повідомте про це розробників."
+        )
+        logger.error(f"User [{message.chat.id}] => {e}")
 
 
 def is_help(message: telebot.types.Message):
@@ -218,7 +235,7 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
 
     else:
 
-        save_to_db_without_description(text, downloaded_file, time_utc)
+        save_to_db_without_description(message, text, downloaded_file, time_utc)
 
         bot.send_message(
             message.chat.id,
