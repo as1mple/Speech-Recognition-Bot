@@ -15,6 +15,7 @@ def save_to_database(
 ):
     """Save to database."""
     json_data = {
+        "name_collection": name_collection,
         "user_id": chat_id,
         "text": text,
         "description": description,
