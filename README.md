@@ -30,3 +30,13 @@ sudo docker run -d --restart unless-stopped -e TOKEN=YOUR-TOKEN -e SERVER_HOST=Y
 ```bash
 docker-compose up
 ````
+
+## Pre-commit hooks
+```bash
+pre-commit run --all-files
+```
+
+Alternative way:
+```bash
+bash pre-commit.sh
+```

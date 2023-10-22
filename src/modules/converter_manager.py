@@ -1,15 +1,13 @@
 from io import BytesIO
 
-from pydub import AudioSegment
 import speech_recognition as sr
+from pydub import AudioSegment
 from pydub.utils import make_chunks
 
 
-def get_text_with_speech(wav_obj: bytes, language: str, logger, message) -> str:
-    result = ""  # result text
-    chunk_length_ms = 58000  # max duration of a split segment of the input .wav file, ms
-    pause_threshold = 2.0  # max duration of a pause fragment in the input .wav file, s
-
+def get_text_with_speech(
+    wav_obj: bytes, language: str, logger, message, chunk_length_ms=58000, pause_threshold=2.0
+) -> str:
     myaudio = AudioSegment.from_file(wav_obj)
     chunks = make_chunks(myaudio, chunk_length_ms)
 
@@ -17,6 +15,7 @@ def get_text_with_speech(wav_obj: bytes, language: str, logger, message) -> str:
     r = sr.Recognizer()
     r.pause_threshold = pause_threshold
 
+    result = ""
     for chunk in chunks:
         wav_chunk = BytesIO()
         chunk.export(wav_chunk, format="wav")
@@ -31,5 +30,5 @@ def get_text_with_speech(wav_obj: bytes, language: str, logger, message) -> str:
     return result
 
 
-def size_b64_string(b64string):
-    return (len(b64string) * 3) / 4 - b64string.count('=', -2)
+def size_b64_string(b64string: str) -> int:
+    return (len(b64string) * 3) / 4 - b64string.count("=", -2)
