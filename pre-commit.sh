@@ -1,3 +1,3 @@
-isort --settings-file ./.isort.cfg .
-black --config ./.black .
-flake8 --config ./.flake8 .
+isort --settings-file config/.isort.cfg . &&
+black --config config/.black . &&
+flake8 --config config/.flake8 .
