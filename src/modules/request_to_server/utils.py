@@ -1,4 +1,5 @@
 import base64
+
 import requests
 
 
@@ -45,4 +46,3 @@ def get_files_by_chat_id(host: str, port: str, name_collection: str, chat_id: st
         "user_id": chat_id,
     }
     return requests.get(f"http://{host}:{port}/get/data", params=params).json()
-

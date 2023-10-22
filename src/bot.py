@@ -1,15 +1,16 @@
 import base64
 import os
 import sys
-from io import BytesIO
 from datetime import datetime
+from io import BytesIO
 
 import telebot
-from telebot import types
 from loguru import logger
+from telebot import types
 
-from modules.convert import get_text_with_speech, size_b64_string
-from modules.request_to_server import save_to_database, get_save_data, get_files_by_chat_id
+from modules.convert import get_text_with_speech
+from modules.request_to_server import get_files_by_chat_id, get_save_data, save_to_database
+
 
 logger.configure(
     handlers=[
@@ -91,7 +92,9 @@ def handle_start_help(message: telebot.types.Message):
 
 def search_files(message: telebot.types.Message):
     """Handle search files command"""
-    logger.info(f"User [{message.chat.id}] => search files by time interval or chat_id => {message.text}")
+    logger.info(
+        f"User [{message.chat.id}] => search files by time interval or chat_id => {message.text}"
+    )
 
     chat_id, time_from, time_to = None, None, None
     try:
@@ -118,7 +121,9 @@ def search_files(message: telebot.types.Message):
 
         markup.row("Так", "Ні")
         bot.send_message(
-            message.chat.id, "Виконувати пошук серед користувачів, які надали анотацію до аудіозапису?", reply_markup=markup
+            message.chat.id,
+            "Виконувати пошук серед користувачів, які надали анотацію до аудіозапису?",
+            reply_markup=markup,
         )
 
         bot.register_next_step_handler(message, run_search_files, chat_id, time_from, time_to)
@@ -130,12 +135,17 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
 
     try:
         if chat_id:
-            result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, collection_name, chat_id)["result"]
+            result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, collection_name, chat_id)[
+                "result"
+            ]
         else:
-            result = get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)["result"]
+            result = get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)[
+                "result"
+            ]
 
         bot.send_message(
-            message.chat.id, f"Знайдено записів: {len(result)}",
+            message.chat.id,
+            f"Знайдено записів: {len(result)}",
             reply_markup=telebot.types.ReplyKeyboardRemove(),
         )
         logger.info(f"User [{message.chat.id}] => Find files => {len(result)}")
@@ -144,10 +154,12 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
             user_id = data["user_id"]
             time = data["timestamp"]["$date"]
             decode_bytes = base64.b64decode(data["speech_bytes"])
-            caption = f'description ~ {data["description"]} \n' \
-                      f"time ~ {time} \nuser_id ~ {user_id} \n" \
-                      f'language ~ {data["language"]} \n' \
-                      f'text ~ {data["text"]}'
+            caption = (
+                f'description ~ {data["description"]} \n'
+                f"time ~ {time} \nuser_id ~ {user_id} \n"
+                f'language ~ {data["language"]} \n'
+                f'text ~ {data["text"]}'
+            )
 
             # logger.info(
             #     f"User [{message.chat.id}] => Send file => {size_b64_string(data['speech_bytes']) / 1024} kb")
@@ -171,7 +183,8 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
 
     except Exception as e:
         bot.send_message(
-            message.chat.id, "Помилка з'єднання з сервером. Повідомте про це розробників."
+            message.chat.id,
+            "Помилка з'єднання з сервером. Повідомте про це розробників.",
         )
         logger.error(f"User [{message.chat.id}] => {e}")
 
@@ -213,7 +226,9 @@ def voice_processing(message: telebot.types.Message):
 
             markup.row("Так", "Ні")
             bot.send_message(
-                message.chat.id, "Зберегти отримані дані до Бази Знань?", reply_markup=markup
+                message.chat.id,
+                "Зберегти отримані дані до Бази Знань?",
+                reply_markup=markup,
             )
 
             bot.register_next_step_handler(message, is_save_to_db, text, downloaded_file)
@@ -234,7 +249,6 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
         bot.register_next_step_handler(message, input_description, text, downloaded_file, time_utc)
 
     else:
-
         save_to_db_without_description(message, text, downloaded_file, time_utc)
 
         bot.send_message(
@@ -244,7 +258,9 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
         )
 
 
-def save_to_db_without_description(message: telebot.types.Message, text, downloaded_file, time_utc):
+def save_to_db_without_description(
+    message: telebot.types.Message, text, downloaded_file, time_utc
+):
     """Save to database without description"""
 
     logger.info(f"User [{message.chat.id}] => Input description => None")
@@ -325,7 +341,9 @@ def say_hello(message: telebot.types.Message):
         markup.row("українська", "російська")
         markup.row("англійська", "німецька")
         bot.send_message(
-            message.chat.id, "Виберіть мову, яку буде містити аудіозапис", reply_markup=markup
+            message.chat.id,
+            "Виберіть мову, яку буде містити аудіозапис",
+            reply_markup=markup,
         )
 
         bot.register_next_step_handler(message, get_language)
@@ -342,7 +360,8 @@ def get_language(message: telebot.types.Message):
         reply_markup=telebot.types.ReplyKeyboardRemove(),
     )
     bot.send_message(
-        message.chat.id, "Запишіть голосове повідомлення або надішліть файл формату wav."
+        message.chat.id,
+        "Запишіть голосове повідомлення або надішліть файл формату wav.",
     )
 
 

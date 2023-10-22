@@ -1,7 +1,7 @@
 from io import BytesIO
 
-from pydub import AudioSegment
 import speech_recognition as sr
+from pydub import AudioSegment
 from pydub.utils import make_chunks
 
 
@@ -32,4 +32,4 @@ def get_text_with_speech(wav_obj: bytes, language: str, logger, message) -> str:
 
 
 def size_b64_string(b64string):
-    return (len(b64string) * 3) / 4 - b64string.count('=', -2)
+    return (len(b64string) * 3) / 4 - b64string.count("=", -2)
