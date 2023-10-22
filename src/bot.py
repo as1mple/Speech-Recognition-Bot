@@ -8,8 +8,8 @@ import telebot
 from loguru import logger
 from telebot import types
 
-from modules.convert import get_text_with_speech
-from modules.request_to_server import get_files_by_chat_id, get_save_data, save_to_database
+from modules.converter_manager import get_text_with_speech
+from modules.database_manager import get_files_by_chat_id, get_save_data, save_to_database
 
 
 logger.configure(
