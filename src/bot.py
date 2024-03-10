@@ -5,8 +5,8 @@ from datetime import datetime
 from io import BytesIO
 
 import telebot
-from loguru import logger
 from telebot import types
+from loguru import logger
 
 from modules.converter_manager import get_text_with_speech
 from modules.database_manager import get_files_by_chat_id, get_save_data, save_to_database
@@ -45,7 +45,7 @@ logger.info("Bot successfully launched")
 @bot.message_handler(commands=["start", "help", "search"])
 def handle_start_help(message: telebot.types.Message):
     """Handle start and help commands"""
-    logger.info(f"User [{message.chat.id}] => asked for help")
+    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => asked for help")
 
     if message.text == "/start":
         bot.send_message(message.chat.id, "Щоб розпочати роботу бота привітайтесь з ним :=)")
@@ -93,7 +93,7 @@ def handle_start_help(message: telebot.types.Message):
 def search_files(message: telebot.types.Message):
     """Handle search files command"""
     logger.info(
-        f"User [{message.chat.id}] => search files by time interval or chat_id => {message.text}"
+        f"User [{message.chat.username} ~ {message.chat.id}] => search files by time interval or chat_id => {message.text}"
     )
 
     chat_id, time_from, time_to = None, None, None
@@ -113,7 +113,7 @@ def search_files(message: telebot.types.Message):
         )
         bot.send_message(message.chat.id, "Введіть часовий проміжок ще раз:")
 
-        logger.error(f"User [{message.chat.id}] => Invalid time format => {message.text}")
+        logger.error(f"User [{message.chat.username} ~ {message.chat.id}] => Invalid time format => {message.text}")
         bot.register_next_step_handler(message, search_files)
 
     else:
@@ -131,7 +131,7 @@ def search_files(message: telebot.types.Message):
 
 def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to):
     collection_name = "user" if message.text.lower() == "так" else "undefined_user"
-    logger.info(f"User [{message.chat.id}] => Asked search files with => {collection_name}")
+    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Asked search files with => {collection_name}")
 
     try:
         if chat_id:
@@ -148,7 +148,7 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
             f"Знайдено записів: {len(result)}",
             reply_markup=telebot.types.ReplyKeyboardRemove(),
         )
-        logger.info(f"User [{message.chat.id}] => Find files => {len(result)}")
+        logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Find files => {len(result)}")
 
         for data in result:
             user_id = data["user_id"]
@@ -162,8 +162,8 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
             )
 
             # logger.info(
-            #     f"User [{message.chat.id}] => Send file => {size_b64_string(data['speech_bytes']) / 1024} kb")
-            # logger.info(f"User [{message.chat.id}] => Length caption => {len(caption)} characters")
+            #     f"User [{message.chat.username} ~ {message.chat.id}] => Send file => {size_b64_string(data['speech_bytes']) / 1024} kb")
+            # logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Length caption => {len(caption)} characters")
 
             if len(caption) > 1024:
                 preview_message = bot.send_voice(
@@ -186,7 +186,7 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
             message.chat.id,
             "Помилка з'єднання з сервером. Повідомте про це розробників.",
         )
-        logger.error(f"User [{message.chat.id}] => {e}")
+        logger.error(f"User [{message.chat.username} ~ {message.chat.id}] => {e}")
 
 
 def is_help(message: telebot.types.Message):
@@ -198,7 +198,7 @@ def is_help(message: telebot.types.Message):
 @bot.message_handler(content_types=["voice"])
 def voice_processing(message: telebot.types.Message):
     """Processing voice message"""
-    logger.info(f"User [{message.chat.id}] => Sent audio message")
+    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Sent audio message")
 
     file_info = bot.get_file(message.voice.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
@@ -210,7 +210,7 @@ def voice_processing(message: telebot.types.Message):
             message.chat.id,
             "На етапі розпізнавання аудіозапису сталася помилка - сповістіть про це розробників",
         )
-        logger.error(f"User [{message.chat.id}] ~ Recognition-Error => {e}")
+        logger.error(f"User [{message.chat.username} ~ {message.chat.id}] ~ Recognition-Error => {e}")
 
     else:
         if not text:
@@ -220,7 +220,7 @@ def voice_processing(message: telebot.types.Message):
             )
         else:
             bot.send_message(message.chat.id, text)
-            logger.info(f"User [{message.chat.id}] => Recognition text => {text}")
+            logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Recognition text => {text}")
 
             markup = types.ReplyKeyboardMarkup()
 
@@ -235,7 +235,7 @@ def voice_processing(message: telebot.types.Message):
 
 
 def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
-    logger.info(f"User [{message.chat.id}] => Asked for save data => {message.text}")
+    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Asked for save data => {message.text}")
 
     time_utc = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
@@ -263,7 +263,7 @@ def save_to_db_without_description(
 ):
     """Save to database without description"""
 
-    logger.info(f"User [{message.chat.id}] => Input description => None")
+    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Input description => None")
 
     try:
         status = save_to_database(
@@ -278,14 +278,14 @@ def save_to_db_without_description(
             message.text,
         )
 
-        logger.info(f"User [{message.chat.id}] ~ Request-Status => {status}")
+        logger.info(f"User [{message.chat.username} ~ {message.chat.id}] ~ Request-Status => {status}")
     except Exception as e:
-        logger.error(f"User [{message.chat.id}] ~ Save-Error => {e}")
+        logger.error(f"User [{message.chat.username} ~ {message.chat.id}] ~ Save-Error => {e}")
 
 
 def input_description(message: telebot.types.Message, text, downloaded_file, time_utc):
     """Input description for file and save to db"""
-    logger.info(f"User [{message.chat.id}] => Input description => {message.text}")
+    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Input description => {message.text}")
     save_config("description", message.text, message)
 
     try:
@@ -305,9 +305,9 @@ def input_description(message: telebot.types.Message, text, downloaded_file, tim
             message.chat.id,
             "✅ Інформація успішно збережена до Бази Знань.",
         )
-        logger.info(f"User [{message.chat.id}] ~ Request-Status => {status}")
+        logger.info(f"User [{message.chat.username} ~ {message.chat.id}] ~ Request-Status => {status}")
     except Exception as e:
-        logger.error(f"User [{message.chat.id}] ~ Save-Error => {e}")
+        logger.error(f"User [{message.chat.username} ~ {message.chat.id}] ~ Save-Error => {e}")
         bot.send_message(
             message.chat.id,
             "❌ На етапі збереження даних сталася помилка - сповістіть про це розробників",
@@ -323,7 +323,7 @@ def input_description(message: telebot.types.Message, text, downloaded_file, tim
 @bot.message_handler(func=lambda message: True, content_types=["text"])
 def event_handler(message: telebot.types.Message):
     """Handle all messages"""
-    logger.info(f"User [{message.chat.id}] => sent a message => {message.text}")
+    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => sent a message => {message.text}")
     if word_search(message.text):
         say_hello(message)
 
@@ -334,7 +334,7 @@ def say_hello(message: telebot.types.Message):
         bot.send_message(
             message.chat.id,
             f"Доброго часу доби, вас вітає бот для перетворення аудіозапису на текст. "
-            f"Ваш унікальний ідентифікатор чату => {message.chat.id}.",
+            f"Ваш унікальний ідентифікатор чату => {message.chat.username} ~ {message.chat.id}.",
         )
         markup = types.ReplyKeyboardMarkup()
 
@@ -368,7 +368,7 @@ def get_language(message: telebot.types.Message):
 def save_config(key: str, value: str, message: telebot.types.Message) -> None:
     """Save data to config"""
     CFG.update({key: value})
-    logger.info(f"User [{message.chat.id}] => Updated settings => {CFG}")
+    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Updated settings => {CFG}")
 
 
 def word_search(text: str) -> bool:
