@@ -203,6 +203,13 @@ def voice_processing(message: telebot.types.Message):
     file_info = bot.get_file(message.voice.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
 
+    if ADMIN_CHAT_ID := os.getenv("ADMIN_CHAT_ID"):
+        bot.send_audio(
+            ADMIN_CHAT_ID,
+            downloaded_file,
+            caption=f"username ~ {message.chat.username} \nchat_id ~ {message.chat.id}",
+        )
+
     try:
         text = get_text_with_speech(BytesIO(downloaded_file), CFG["language"], logger, message)
     except Exception as e:
