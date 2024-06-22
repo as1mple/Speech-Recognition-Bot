@@ -8,9 +8,9 @@ import telebot
 from telebot import types
 from loguru import logger
 
-from modules.converter_manager import get_text_with_speech
+from modules.audio_handler import AudioProcessor
 from modules.database_manager import get_files_by_chat_id, get_save_data, save_to_database
-
+from setting import SERVER_HOST, SERVER_PORT, MAX_CAPTION_LENGTH, TOKEN
 
 logger.configure(
     handlers=[
@@ -31,14 +31,11 @@ LANGUAGES_MAP = {
     "німецька": "de-DE",
 }
 
-SERVER_HOST = os.getenv("SERVER_HOST")
-SERVER_PORT = os.getenv("SERVER_PORT")
-TOKEN = os.getenv("TOKEN")
-
 CFG = {"language": "uk-UA"}
 utcnow = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 bot = telebot.TeleBot(TOKEN)
+audio_processor = AudioProcessor()
 logger.info("Bot successfully launched")
 
 
@@ -139,9 +136,7 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
                 "result"
             ]
         else:
-            result = get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)[
-                "result"
-            ]
+            result = get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)["result"]
 
         bot.send_message(
             message.chat.id,
@@ -161,18 +156,18 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
                 f'text ~ {data["text"]}'
             )
 
-            # logger.info(
-            #     f"User [{message.chat.username} ~ {message.chat.id}] => Send file => {size_b64_string(data['speech_bytes']) / 1024} kb")
-            # logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Length caption => {len(caption)} characters")
-
-            if len(caption) > 1024:
+            if len(caption) > MAX_CAPTION_LENGTH:
                 preview_message = bot.send_voice(
                     message.chat.id,
                     decode_bytes,
-                    caption=caption[:1024],
+                    caption=caption[:MAX_CAPTION_LENGTH],
                 )
 
-                bot.reply_to(preview_message, caption[1024:])
+                remaining_caption = caption[MAX_CAPTION_LENGTH:]
+                while len(remaining_caption) > 0:
+                    part_caption = remaining_caption[:MAX_CAPTION_LENGTH]
+                    bot.reply_to(preview_message, part_caption)
+                    remaining_caption = remaining_caption[MAX_CAPTION_LENGTH:]
 
             else:
                 bot.send_voice(
@@ -211,7 +206,8 @@ def voice_processing(message: telebot.types.Message):
         )
 
     try:
-        text = get_text_with_speech(BytesIO(downloaded_file), CFG["language"], logger, message)
+        # text = audio_processor.process_with_google_speech(BytesIO(downloaded_file), CFG["language"], logger, message)
+        text = audio_processor.process_with_whisper(BytesIO(downloaded_file))
     except Exception as e:
         bot.send_message(
             message.chat.id,
@@ -246,7 +242,7 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
 
     time_utc = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-    if message.text.lower() == "так":
+    if message.text and message.text.lower() == "так":
         bot.send_message(
             message.chat.id,
             "Напишіть опис до файлу або його id",
@@ -267,7 +263,7 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
 
 def save_to_db_without_description(
     message: telebot.types.Message, text, downloaded_file, time_utc
-):
+) -> None:
     """Save to database without description"""
 
     logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Input description => None")
