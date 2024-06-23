@@ -19,17 +19,22 @@ python src/bot.py
 
 ## Docker
 ```bash
-sudo docker build -f Dockerfile -t speech_to_text_bot . # => Docker Build
+sudo docker build -f Dockerfile -t bot_speech_to_text_image . # => Docker Build
 ```
 
 ```bash
-sudo docker run -d --restart unless-stopped -e TOKEN=YOUR-TOKEN -e SERVER_HOST=YOUR-HOST -e SERVER_HOST=YOUR-PORT -v /{full path to project}/logs/:/app/logs/ speech_to_text_bot # => Docker Run
+sudo docker run -it -d --env-file .env --restart unless-stopped  -v /{full path to project}/logs/:/app/logs/ --name bot_speech_to_text bot_speech_to_text_image # => Docker Run
 ```
 
 ## Docker-Compose
 ```bash
 docker-compose up
 ````
+
+## Bash
+```bash
+sh run-bot-recogniton-docker-procss.sh
+```
 
 ## Pre-commit hooks
 ```bash
