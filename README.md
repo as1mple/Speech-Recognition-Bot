@@ -45,3 +45,8 @@ Alternative way:
 ```bash
 bash pre-commit.sh
 ```
+
+## Makefile:
+```bash
+make check-types  
+```
