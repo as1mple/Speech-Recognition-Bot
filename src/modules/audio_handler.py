@@ -1,5 +1,6 @@
 from io import BytesIO
 
+import telebot
 from groq import Groq
 import speech_recognition as sr
 from pydub import AudioSegment
@@ -13,7 +14,7 @@ class AudioProcessor:
         self.client = Groq(api_key=GROQ_API_KEY)
 
     def process_with_google_speech(
-        self, wav_obj: bytes, language: str, logger, message, chunk_length_ms=58000, pause_threshold=2.0
+        self, wav_obj: bytes, language: str, message: telebot.types.Message, chunk_length_ms: int = 58000, pause_threshold: float = 2.0
     ) -> str:
         myaudio = AudioSegment.from_file(wav_obj)
         chunks = make_chunks(myaudio, chunk_length_ms)
@@ -28,15 +29,12 @@ class AudioProcessor:
             chunk.export(wav_chunk, format="wav")
             with sr.AudioFile(wav_chunk) as source:
                 audio_text = r.listen(source)
-            try:
-                text = r.recognize_google(audio_text, language=language, show_all=False)
-                result = f"{result} {text}"
-            except Exception as e:
-                logger.error(f"User [{message.chat.id}] => Invalid speech. {str(e)}")
+            text = r.recognize_google(audio_text, language=language, show_all=False)
+            result = f"{result} {text}"
 
         return result
 
-    def process_with_whisper(self, wav_obj: bytes) -> str:
+    def process_with_whisper(self, wav_obj: BytesIO) -> str:
         transcription = self.client.audio.transcriptions.create(
             file=("tmp.wav", wav_obj),
             model="whisper-large-v3",

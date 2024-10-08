@@ -13,23 +13,24 @@ def save_to_database(
     language: str,
     speech_bytes: str,
     description: str,
-):
+) -> requests.Response:
     """Save to database."""
-    json_data = {
-        "name_collection": name_collection,
-        "user_id": chat_id,
-        "text": text,
-        "description": description,
-        "speech_bytes": base64.b64encode(speech_bytes).decode(),
-        "language": language,
-        "timestamp": utcnow,
-    }
 
-    response = requests.post(f"http://{host}:{port}/add/data", json=json_data)
+    response = requests.post(
+        f"http://{host}:{port}/add/data",
+        json={
+            "name_collection": name_collection,
+            "user_id": chat_id,
+            "text": text,
+            "description": description,
+            "speech_bytes": base64.b64encode(speech_bytes).decode(), # type: ignore[arg-type]
+            "language": language,
+            "timestamp": utcnow
+        })
     return response
 
 
-def get_save_data(host: str, port: str, name_collection: str, time_from: str, time_to: str):
+def get_save_data(host: str, port: str, name_collection: str, time_from: str, time_to: str) -> dict:
     """Get data from database."""
     params = {
         "name_collection": name_collection,
@@ -39,7 +40,7 @@ def get_save_data(host: str, port: str, name_collection: str, time_from: str, ti
     return requests.get(f"http://{host}:{port}/get/data", params=params).json()
 
 
-def get_files_by_chat_id(host: str, port: str, name_collection: str, chat_id: str):
+def get_files_by_chat_id(host: str, port: str, name_collection: str, chat_id: str) -> dict:
     """Get files by chat id."""
     params = {
         "name_collection": name_collection,

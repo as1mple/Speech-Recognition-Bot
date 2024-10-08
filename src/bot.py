@@ -40,7 +40,7 @@ logger.info("Bot successfully launched")
 
 
 @bot.message_handler(commands=["start", "help", "search"])
-def handle_start_help(message: telebot.types.Message):
+def handle_start_help(message: telebot.types.Message) -> None:
     """Handle start and help commands"""
     logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => asked for help")
 
@@ -72,10 +72,10 @@ def handle_start_help(message: telebot.types.Message):
         )
         bot.send_message(message.chat.id, "Введіть часовий проміжок (або chat id):")
 
-        bot.register_next_step_handler(message, search_files)
+        bot.register_next_step_handler(message, handle_file_search)
 
     elif word_search(message.text):
-        say_hello(message)
+        send_hello_message(message)
 
     else:
         bot.send_message(
@@ -87,7 +87,7 @@ def handle_start_help(message: telebot.types.Message):
         )
 
 
-def search_files(message: telebot.types.Message):
+def handle_file_search(message: telebot.types.Message) -> None:
     """Handle search files command"""
     logger.info(
         f"User [{message.chat.username} ~ {message.chat.id}] => search files by time interval or chat_id => {message.text}"
@@ -111,7 +111,7 @@ def search_files(message: telebot.types.Message):
         bot.send_message(message.chat.id, "Введіть часовий проміжок ще раз:")
 
         logger.error(f"User [{message.chat.username} ~ {message.chat.id}] => Invalid time format => {message.text}")
-        bot.register_next_step_handler(message, search_files)
+        bot.register_next_step_handler(message, handle_file_search)
 
     else:
         markup = types.ReplyKeyboardMarkup()
@@ -126,17 +126,13 @@ def search_files(message: telebot.types.Message):
         bot.register_next_step_handler(message, run_search_files, chat_id, time_from, time_to)
 
 
-def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to):
+def run_search_files(message: telebot.types.Message, chat_id: str, time_from: str, time_to: str) -> None:
     collection_name = "user" if message.text.lower() == "так" else "undefined_user"
     logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Asked search files with => {collection_name}")
 
     try:
-        if chat_id:
-            result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, collection_name, chat_id)[
-                "result"
-            ]
-        else:
-            result = get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)["result"]
+        result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, collection_name, chat_id)["result"] \
+            if chat_id else get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)["result"]
 
         bot.send_message(
             message.chat.id,
@@ -184,14 +180,14 @@ def run_search_files(message: telebot.types.Message, chat_id, time_from, time_to
         logger.error(f"User [{message.chat.username} ~ {message.chat.id}] => {e}")
 
 
-def is_help(message: telebot.types.Message):
+def handle_help_command(message: telebot.types.Message) -> None:
     """Check if message is help command"""
     if not message == "/help":
-        bot.register_next_step_handler(message, say_hello)
+        bot.register_next_step_handler(message, send_hello_message)
 
 
 @bot.message_handler(content_types=["voice"])
-def voice_processing(message: telebot.types.Message):
+def voice_processing(message: telebot.types.Message) -> None:
     """Processing voice message"""
     logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Sent audio message")
 
@@ -234,10 +230,10 @@ def voice_processing(message: telebot.types.Message):
                 reply_markup=markup,
             )
 
-            bot.register_next_step_handler(message, is_save_to_db, text, downloaded_file)
+            bot.register_next_step_handler(message, handle_save_to_db, text, downloaded_file)
 
 
-def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
+def handle_save_to_db(message: telebot.types.Message, text: str, downloaded_file: str) -> None:
     logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Asked for save data => {message.text}")
 
     time_utc = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -249,7 +245,7 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
             reply_markup=telebot.types.ReplyKeyboardRemove(),
         )
 
-        bot.register_next_step_handler(message, input_description, text, downloaded_file, time_utc)
+        bot.register_next_step_handler(message, send_input_description, text, downloaded_file, time_utc)
 
     else:
         save_to_db_without_description(message, text, downloaded_file, time_utc)
@@ -262,7 +258,7 @@ def is_save_to_db(message: telebot.types.Message, text, downloaded_file):
 
 
 def save_to_db_without_description(
-    message: telebot.types.Message, text, downloaded_file, time_utc
+    message: telebot.types.Message, text: str, downloaded_file: str, time_utc: str
 ) -> None:
     """Save to database without description"""
 
@@ -286,7 +282,7 @@ def save_to_db_without_description(
         logger.error(f"User [{message.chat.username} ~ {message.chat.id}] ~ Save-Error => {e}")
 
 
-def input_description(message: telebot.types.Message, text, downloaded_file, time_utc):
+def send_input_description(message: telebot.types.Message, text: str, downloaded_file: str, time_utc: str) -> None:
     """Input description for file and save to db"""
     logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Input description => {message.text}")
     save_config("description", message.text, message)
@@ -324,14 +320,14 @@ def input_description(message: telebot.types.Message, text, downloaded_file, tim
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
-def event_handler(message: telebot.types.Message):
+def event_handler(message: telebot.types.Message) -> None:
     """Handle all messages"""
     logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => sent a message => {message.text}")
     if word_search(message.text):
-        say_hello(message)
+        send_hello_message(message)
 
 
-def say_hello(message: telebot.types.Message):
+def send_hello_message(message: telebot.types.Message) -> None:
     """Say hello to user and ask for language"""
     if word_search(message.text):
         bot.send_message(
@@ -349,10 +345,10 @@ def say_hello(message: telebot.types.Message):
             reply_markup=markup,
         )
 
-        bot.register_next_step_handler(message, get_language)
+        bot.register_next_step_handler(message, set_language)
 
 
-def get_language(message: telebot.types.Message):
+def set_language(message: telebot.types.Message) -> None:
     """Get language from user"""
     change_language = LANGUAGES_MAP.get(message.text, "uk-UA")
     save_config("language", change_language, message)
