@@ -5,12 +5,12 @@ from datetime import datetime
 from io import BytesIO
 
 import telebot
-from telebot import types
 from loguru import logger
-
 from modules.audio_handler import AudioProcessor
 from modules.database_manager import get_files_by_chat_id, get_save_data, save_to_database
-from setting import SERVER_HOST, SERVER_PORT, MAX_CAPTION_LENGTH, TOKEN
+from setting import MAX_CAPTION_LENGTH, SERVER_HOST, SERVER_PORT, TOKEN
+from telebot import types
+
 
 logger.configure(
     handlers=[
@@ -110,7 +110,9 @@ def handle_file_search(message: telebot.types.Message) -> None:
         )
         bot.send_message(message.chat.id, "Введіть часовий проміжок ще раз:")
 
-        logger.error(f"User [{message.chat.username} ~ {message.chat.id}] => Invalid time format => {message.text}")
+        logger.error(
+            f"User [{message.chat.username} ~ {message.chat.id}] => Invalid time format => {message.text}"
+        )
         bot.register_next_step_handler(message, handle_file_search)
 
     else:
@@ -126,20 +128,31 @@ def handle_file_search(message: telebot.types.Message) -> None:
         bot.register_next_step_handler(message, run_search_files, chat_id, time_from, time_to)
 
 
-def run_search_files(message: telebot.types.Message, chat_id: str, time_from: str, time_to: str) -> None:
+def run_search_files(
+    message: telebot.types.Message, chat_id: str, time_from: str, time_to: str
+) -> None:
     collection_name = "user" if message.text.lower() == "так" else "undefined_user"
-    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Asked search files with => {collection_name}")
+    logger.info(
+        f"User [{message.chat.username} ~ {message.chat.id}] => Asked search files with => {collection_name}"
+    )
 
     try:
-        result = get_files_by_chat_id(SERVER_HOST, SERVER_PORT, collection_name, chat_id)["result"] \
-            if chat_id else get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)["result"]
+        result = (
+            get_files_by_chat_id(SERVER_HOST, SERVER_PORT, collection_name, chat_id)["result"]
+            if chat_id
+            else get_save_data(SERVER_HOST, SERVER_PORT, collection_name, time_from, time_to)[
+                "result"
+            ]
+        )
 
         bot.send_message(
             message.chat.id,
             f"Знайдено записів: {len(result)}",
             reply_markup=telebot.types.ReplyKeyboardRemove(),
         )
-        logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Find files => {len(result)}")
+        logger.info(
+            f"User [{message.chat.username} ~ {message.chat.id}] => Find files => {len(result)}"
+        )
 
         for data in result:
             user_id = data["user_id"]
@@ -209,7 +222,9 @@ def voice_processing(message: telebot.types.Message) -> None:
             message.chat.id,
             "На етапі розпізнавання аудіозапису сталася помилка - сповістіть про це розробників",
         )
-        logger.error(f"User [{message.chat.username} ~ {message.chat.id}] ~ Recognition-Error => {e}")
+        logger.error(
+            f"User [{message.chat.username} ~ {message.chat.id}] ~ Recognition-Error => {e}"
+        )
 
     else:
         if not text:
@@ -219,7 +234,9 @@ def voice_processing(message: telebot.types.Message) -> None:
             )
         else:
             bot.send_message(message.chat.id, text)
-            logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Recognition text => {text}")
+            logger.info(
+                f"User [{message.chat.username} ~ {message.chat.id}] => Recognition text => {text}"
+            )
 
             markup = types.ReplyKeyboardMarkup()
 
@@ -234,7 +251,9 @@ def voice_processing(message: telebot.types.Message) -> None:
 
 
 def handle_save_to_db(message: telebot.types.Message, text: str, downloaded_file: str) -> None:
-    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Asked for save data => {message.text}")
+    logger.info(
+        f"User [{message.chat.username} ~ {message.chat.id}] => Asked for save data => {message.text}"
+    )
 
     time_utc = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
@@ -245,7 +264,9 @@ def handle_save_to_db(message: telebot.types.Message, text: str, downloaded_file
             reply_markup=telebot.types.ReplyKeyboardRemove(),
         )
 
-        bot.register_next_step_handler(message, send_input_description, text, downloaded_file, time_utc)
+        bot.register_next_step_handler(
+            message, send_input_description, text, downloaded_file, time_utc
+        )
 
     else:
         save_to_db_without_description(message, text, downloaded_file, time_utc)
@@ -277,14 +298,20 @@ def save_to_db_without_description(
             message.text,
         )
 
-        logger.info(f"User [{message.chat.username} ~ {message.chat.id}] ~ Request-Status => {status}")
+        logger.info(
+            f"User [{message.chat.username} ~ {message.chat.id}] ~ Request-Status => {status}"
+        )
     except Exception as e:
         logger.error(f"User [{message.chat.username} ~ {message.chat.id}] ~ Save-Error => {e}")
 
 
-def send_input_description(message: telebot.types.Message, text: str, downloaded_file: str, time_utc: str) -> None:
+def send_input_description(
+    message: telebot.types.Message, text: str, downloaded_file: str, time_utc: str
+) -> None:
     """Input description for file and save to db"""
-    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => Input description => {message.text}")
+    logger.info(
+        f"User [{message.chat.username} ~ {message.chat.id}] => Input description => {message.text}"
+    )
     save_config("description", message.text, message)
 
     try:
@@ -304,7 +331,9 @@ def send_input_description(message: telebot.types.Message, text: str, downloaded
             message.chat.id,
             "✅ Інформація успішно збережена до Бази Знань.",
         )
-        logger.info(f"User [{message.chat.username} ~ {message.chat.id}] ~ Request-Status => {status}")
+        logger.info(
+            f"User [{message.chat.username} ~ {message.chat.id}] ~ Request-Status => {status}"
+        )
     except Exception as e:
         logger.error(f"User [{message.chat.username} ~ {message.chat.id}] ~ Save-Error => {e}")
         bot.send_message(
@@ -322,7 +351,9 @@ def send_input_description(message: telebot.types.Message, text: str, downloaded
 @bot.message_handler(func=lambda message: True, content_types=["text"])
 def event_handler(message: telebot.types.Message) -> None:
     """Handle all messages"""
-    logger.info(f"User [{message.chat.username} ~ {message.chat.id}] => sent a message => {message.text}")
+    logger.info(
+        f"User [{message.chat.username} ~ {message.chat.id}] => sent a message => {message.text}"
+    )
     if word_search(message.text):
         send_hello_message(message)
 

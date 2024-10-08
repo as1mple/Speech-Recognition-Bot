@@ -1,11 +1,10 @@
 from io import BytesIO
 
+import speech_recognition as sr
 import telebot
 from groq import Groq
-import speech_recognition as sr
 from pydub import AudioSegment
 from pydub.utils import make_chunks
-
 from setting import GROQ_API_KEY
 
 
@@ -14,7 +13,12 @@ class AudioProcessor:
         self.client = Groq(api_key=GROQ_API_KEY)
 
     def process_with_google_speech(
-        self, wav_obj: bytes, language: str, message: telebot.types.Message, chunk_length_ms: int = 58000, pause_threshold: float = 2.0
+        self,
+        wav_obj: bytes,
+        language: str,
+        message: telebot.types.Message,
+        chunk_length_ms: int = 58000,
+        pause_threshold: float = 2.0,
     ) -> str:
         myaudio = AudioSegment.from_file(wav_obj)
         chunks = make_chunks(myaudio, chunk_length_ms)
@@ -40,5 +44,3 @@ class AudioProcessor:
             model="whisper-large-v3",
         )
         return transcription.text
-
-

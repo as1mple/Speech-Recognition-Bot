@@ -48,5 +48,8 @@ bash pre-commit.sh
 
 ## Makefile:
 ```bash
-make check-types  
+make check-types
+```
+```bash
+make check-format
 ```

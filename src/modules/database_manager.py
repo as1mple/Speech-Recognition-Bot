@@ -23,14 +23,17 @@ def save_to_database(
             "user_id": chat_id,
             "text": text,
             "description": description,
-            "speech_bytes": base64.b64encode(speech_bytes).decode(), # type: ignore[arg-type]
+            "speech_bytes": base64.b64encode(speech_bytes).decode(),  # type: ignore[arg-type]
             "language": language,
-            "timestamp": utcnow
-        })
+            "timestamp": utcnow,
+        },
+    )
     return response
 
 
-def get_save_data(host: str, port: str, name_collection: str, time_from: str, time_to: str) -> dict:
+def get_save_data(
+    host: str, port: str, name_collection: str, time_from: str, time_to: str
+) -> dict:
     """Get data from database."""
     params = {
         "name_collection": name_collection,

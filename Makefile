@@ -2,6 +2,9 @@ VENV = venv
 PYTHON = python3.11
 PIP = $(VENV)/bin/pip
 MYPY = $(VENV)/bin/mypy
+ISORT = $(VENV)/bin/isort
+BLACK = $(VENV)/bin/black
+FLAKE8 = $(VENV)/bin/flake8
 
 create-venv:
 	@if [ -d $(VENV) ]; then \
@@ -18,3 +21,12 @@ install: create-venv
 check-types:
 	@echo "Checking types with mypy"
 	$(MYPY) .
+
+
+check-format:
+	@echo "Running isort..."
+	$(ISORT) --settings-file config/.isort.cfg .
+	@echo "Running black..."
+	$(BLACK) --config config/.black .
+	@echo "Running flake8..."
+	$(FLAKE8) --config config/.flake8 .
